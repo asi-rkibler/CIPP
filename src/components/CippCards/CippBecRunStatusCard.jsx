@@ -14,6 +14,7 @@ import ReactTimeAgo from 'react-time-ago'
 import CippButtonCard from './CippButtonCard'
 import { CippJobProgress } from '../CippComponents/CippJobProgress'
 import { CippBecContainmentDrawer } from '../CippComponents/CippBecContainmentDrawer'
+import { CippBecWindowSelect } from '../CippComponents/CippBecWindowSelect'
 
 const toDate = (value) => {
   if (!value) return null
@@ -42,7 +43,8 @@ export const CippBecRunStatusCard = ({
   poll,
   onStart,
   startPending = false,
-  windowDays = 7,
+  windowDays,
+  onWindowDaysChange,
 }) => {
   const progress = poll?.Progress
   const steps = Array.isArray(progress?.Steps) ? progress.Steps : []
@@ -81,24 +83,39 @@ export const CippBecRunStatusCard = ({
     statusChip = <Chip size="small" color="error" label="Failed" />
   }
 
+  // The window is picked before the run starts; it is read-only once the run is queued.
   const startButton = (
-    <Button
-      variant="contained"
-      size="small"
-      onClick={() => onStart()}
-      disabled={busy}
-      startIcon={
-        <SvgIcon fontSize="small">
-          <CippIcons.TravelExplore />
-        </SvgIcon>
-      }
+    <Stack
+      direction="row"
+      spacing={1}
+      useFlexGap
+      sx={{ alignItems: 'center', flexWrap: 'wrap' }}
     >
-      {state === 'error' ? 'Run a new investigation' : 'Run investigation'}
-    </Button>
+      {onWindowDaysChange && (
+        <CippBecWindowSelect
+          value={windowDays}
+          onChange={onWindowDaysChange}
+          disabled={busy}
+        />
+      )}
+      <Button
+        variant="contained"
+        size="small"
+        onClick={() => onStart()}
+        disabled={busy}
+        startIcon={
+          <SvgIcon fontSize="small">
+            <CippIcons.TravelExplore />
+          </SvgIcon>
+        }
+      >
+        {state === 'error' ? 'Run a new investigation' : 'Run investigation'}
+      </Button>
+    </Stack>
   )
   const cardButtons =
     state === 'waiting' && caseId ? (
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
         {startButton}
         <CippBecContainmentDrawer
           userPrincipalName={userPrincipalName}
@@ -129,9 +146,8 @@ export const CippBecRunStatusCard = ({
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
-            flexWrap="wrap"
             useFlexGap
+            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
           >
             {statusChip}
             {caseId && (
@@ -144,7 +160,7 @@ export const CippBecRunStatusCard = ({
       isFetching={false}
     >
       {state === 'loading' && (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <CircularProgress size={16} />
           <Typography variant="body2">
             Loading the user&apos;s runs...
@@ -160,9 +176,9 @@ export const CippBecRunStatusCard = ({
             return to, report on and export evidence from.
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            The investigation reads the last {windowDays} days of audit records,
-            sign-ins, permissions, rules, consents, devices and trace headers
-            across 21 checks. It collects metadata only - never message content
+            The investigation reads the last 7 days (30 for tenants with Entra
+            ID P1 or P2) of audit records, sign-ins, permissions, rules,
+            consents, devices and trace headers across 21 checks. It collects metadata only - never message content
             - and usually takes a few minutes.
           </Typography>
         </Stack>
